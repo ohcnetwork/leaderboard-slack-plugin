@@ -1,0 +1,32 @@
+{
+  "name": "@leaderboard/plugin-leaderboard-slack-plugin",
+  "version": "0.1.0",
+  "description": "Leaderboard scraper to track EOD messages from a slack channel.",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc && esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --packages=external",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "leaderboard",
+    "plugin"
+  ],
+  "dependencies": {
+    "@leaderboard/api": "file:../leaderboard/packages/api",
+    "@slack/web-api": "^7.13.0",
+    "date-fns": "^4.1.0",
+    "eslint": "^9.39.2",
+    "slack-markdown": "^0.3.0",
+    "tsx": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.27",
+    "esbuild": "^0.27.2",
+    "typescript": "^5.7.3",
+    "vitest": "^4.0.16"
+  },
+  "author": "Open Healthcare Network",
+  "license": "MIT"
+}
