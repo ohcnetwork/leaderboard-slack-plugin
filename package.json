@@ -1,6 +1,6 @@
 {
   "name": "@ohcnetwork/leaderboard-slack-plugin",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": false,
   "description": "Leaderboard scraper to track EOD messages from a slack channel.",
   "type": "module",
