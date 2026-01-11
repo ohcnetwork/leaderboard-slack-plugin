@@ -1,4 +1,4 @@
-import { PluginConfig } from "@leaderboard/api";
+import type { PluginConfig } from "@ohcnetwork/leaderboard-api";
 import { WebClient } from "@slack/web-api";
 
 let webClient: WebClient | null = null;

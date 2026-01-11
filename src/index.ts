@@ -8,7 +8,7 @@ import {
   activityDefinitionQueries,
   type Plugin,
   type PluginContext,
-} from "@leaderboard/api";
+} from "@ohcnetwork/leaderboard-api";
 import { subDays } from "date-fns";
 
 enum ActivityDefinitions {

@@ -8,9 +8,8 @@ import {
 import {
   Activity,
   activityQueries,
-  Database,
   PluginContext,
-} from "@leaderboard/api";
+} from "@ohcnetwork/leaderboard-api";
 import { getSlackWebClient } from "@/src/lib/slack-web-client";
 
 interface ConversationHistoryResponse {

@@ -8,8 +8,8 @@ import {
   initializeSchema,
   activityDefinitionQueries,
   activityQueries,
-} from "@leaderboard/api";
-import type { Database } from "@leaderboard/api";
+} from "@ohcnetwork/leaderboard-api";
+import type { Database } from "@ohcnetwork/leaderboard-api";
 import plugin from "../index";
 
 // Mock the Slack Web API
@@ -55,7 +55,6 @@ describe("Leaderboard-slack-plugin Plugin", () => {
     if (plugin.setup) {
       await plugin.setup({
         db,
-        dataDirectory: "",
         config: {
           slackChannel: "test-channel",
           slackApiToken: "xoxb-test-token",
@@ -100,7 +99,6 @@ describe("Leaderboard-slack-plugin Plugin", () => {
     if (plugin.setup) {
       await plugin.setup({
         db,
-        dataDirectory: "",
         config,
         orgConfig: {
           name: "Test Org",
@@ -115,7 +113,6 @@ describe("Leaderboard-slack-plugin Plugin", () => {
     // Then scrape
     await plugin.scrape({
       db,
-      dataDirectory: "",
       config,
       orgConfig: {
         name: "Test Org",

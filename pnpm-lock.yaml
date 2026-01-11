@@ -8,18 +8,15 @@ importers:
 
   .:
     dependencies:
-      '@leaderboard/api':
-        specifier: file:../leaderboard/packages/api
-        version: file:../leaderboard/packages/api
+      '@ohcnetwork/leaderboard-api':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@slack/web-api':
         specifier: ^7.13.0
         version: 7.13.0
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
-      eslint:
-        specifier: ^9.39.2
-        version: 9.39.2
       slack-markdown:
         specifier: ^0.3.0
         version: 0.3.0
@@ -33,6 +30,9 @@ importers:
       esbuild:
         specifier: ^0.27.2
         version: 0.27.2
+      eslint:
+        specifier: ^9.39.2
+        version: 9.39.2
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
@@ -255,10 +255,6 @@ packages:
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
 
-  '@leaderboard/api@file:../leaderboard/packages/api':
-    resolution: {directory: ../leaderboard/packages/api, type: directory}
-    hasBin: true
-
   '@libsql/client@0.14.0':
     resolution: {integrity: sha512-/9HEKfn6fwXB5aTEEoMeFh4CtG0ZzbncBb1e++OCdVpgKZ/xyMsIVYXm0w7Pv4RUel803vE6LwniB3PqD72R0Q==}
 
@@ -312,6 +308,10 @@ packages:
 
   '@neon-rs/load@0.0.4':
     resolution: {integrity: sha512-kTPhdZyTQxB+2wpiRcFWrDcejc4JI6tkPuS7UZCG4l6Zvc5kU/gGQ/ozvHTh1XR5tS+UlfAfGuPajjzQjCiHCw==}
+
+  '@ohcnetwork/leaderboard-api@0.1.0':
+    resolution: {integrity: sha512-FJwkJnHj1SKCHdOQzhz0a/j8EiaSLwu16FJPZyR3BdZSaCBt8htPGLrwifnQQSXm/KTcwRqMtXGX+cZyC6N4zg==}
+    hasBin: true
 
   '@rollup/rollup-android-arm-eabi@4.54.0':
     resolution: {integrity: sha512-OywsdRHrFvCdvsewAInDKCNyR3laPA2mc9bRYJ6LBp5IyvF3fvXbbNR0bSzHlZVFtn6E0xw2oZlyjg4rKCVcng==}
@@ -1179,8 +1179,8 @@ packages:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
     engines: {node: '>=0.10.0'}
 
-  ws@8.18.3:
-    resolution: {integrity: sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg==}
+  ws@8.19.0:
+    resolution: {integrity: sha512-blAT2mjOEIi0ZzruJfIhb3nps74PRWTCz1IjglWEEpQl5XS/UNama6u2/rjFkDDouqr4L67ry+1aGIALViWjDg==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -1334,14 +1334,6 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
-  '@leaderboard/api@file:../leaderboard/packages/api':
-    dependencies:
-      '@libsql/client': 0.14.0
-      gray-matter: 4.0.3
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
   '@libsql/client@0.14.0':
     dependencies:
       '@libsql/core': 0.14.0
@@ -1378,7 +1370,7 @@ snapshots:
   '@libsql/isomorphic-ws@0.1.5':
     dependencies:
       '@types/ws': 8.18.1
-      ws: 8.18.3
+      ws: 8.19.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -1399,6 +1391,14 @@ snapshots:
     optional: true
 
   '@neon-rs/load@0.0.4': {}
+
+  '@ohcnetwork/leaderboard-api@0.1.0':
+    dependencies:
+      '@libsql/client': 0.14.0
+      gray-matter: 4.0.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   '@rollup/rollup-android-arm-eabi@4.54.0':
     optional: true
@@ -2217,6 +2217,6 @@ snapshots:
 
   word-wrap@1.2.5: {}
 
-  ws@8.18.3: {}
+  ws@8.19.0: {}
 
   yocto-queue@0.1.0: {}

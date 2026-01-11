@@ -2,7 +2,7 @@
  * Reusable query builders and helpers
  */
 
-import { Contributor, Database } from "@leaderboard/api";
+import type { Database } from "@ohcnetwork/leaderboard-api";
 
 interface SlackAnonymousEodUpdate {
   id: number;
