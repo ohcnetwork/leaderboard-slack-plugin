@@ -7,7 +7,10 @@
   "scripts": {
     "build": "tsc && esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --packages=external",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm build && changeset publish"
   },
   "keywords": [
     "leaderboard",
@@ -21,6 +24,7 @@
     "tsx": "^4.21.0"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.8",
     "@types/node": "^20.19.27",
     "esbuild": "^0.27.2",
     "eslint": "^9.39.2",
@@ -28,5 +32,13 @@
     "vitest": "^4.0.16"
   },
   "author": "Open Healthcare Network",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ohcnetwork/leaderboard-slack-plugin.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
+  }
 }
