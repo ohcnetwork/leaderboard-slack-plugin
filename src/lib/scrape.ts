@@ -51,7 +51,7 @@ export async function getSlackMessages(ctx: PluginContext, since?: Date) {
   const slackChannel = ctx.config.slackChannel as string;
 
   ctx.logger.info(
-    `Fetching Slack messages from ${slackChannel} between ${oldest.toISOString()} and ${latest.toISOString()}...`
+    `Fetching Slack messages from ${slackChannel} between ${oldest.toISOString()} and ${latest.toISOString()}...`,
   );
 
   for await (const page of slack.paginate("conversations.history", {
@@ -66,7 +66,7 @@ export async function getSlackMessages(ctx: PluginContext, since?: Date) {
           msg.type === "message" &&
           msg.user &&
           msg.text &&
-          msg.text.trim().length > 5 // ignore very short messages
+          msg.text.trim().length > 5, // ignore very short messages
       )
       .map((msg) => ({
         id: parseInt((parseFloat(msg.ts) * 1000).toString()), // slack's ts is a float, so we multiply by 1000 to get the timestamp in milliseconds
@@ -97,7 +97,7 @@ export async function ingestEodUpdates(ctx: PluginContext) {
   const slackUserIds = Array.from(updates.keys());
   const contributorMap = await getContributorUsernamesBySlackUserIds(
     ctx.db,
-    slackUserIds
+    slackUserIds,
   );
 
   let processedCount = 0;
@@ -112,7 +112,7 @@ export async function ingestEodUpdates(ctx: PluginContext) {
 
     if (!contributorUsername) {
       ctx.logger.warn(
-        `⚠️  No contributor found with slack_user_id: ${user_id} (${userUpdates.length} messages skipped)`
+        `⚠️  No contributor found with slack_user_id: ${user_id} (${userUpdates.length} messages skipped)`,
       );
       warnings.push(user_id);
       skippedCount += userUpdates.length;
@@ -157,7 +157,7 @@ export async function ingestEodUpdates(ctx: PluginContext) {
         contributor: contributorUsername,
         activity_definition: "eod_update",
         title: "EOD Update",
-        occured_at: timestamp.toISOString(),
+        occurred_at: timestamp.toISOString(),
         link: null,
         text: mergedText,
         points: null,
@@ -170,7 +170,7 @@ export async function ingestEodUpdates(ctx: PluginContext) {
     }
 
     ctx.logger.info(
-      `✓ Prepared ${messagesByDate.size} EOD activities for ${contributorUsername}`
+      `✓ Prepared ${messagesByDate.size} EOD activities for ${contributorUsername}`,
     );
   });
 
@@ -192,7 +192,7 @@ export async function ingestEodUpdates(ctx: PluginContext) {
   ctx.logger.info(`Skipped: ${skippedCount} messages`);
   if (warnings.length > 0) {
     ctx.logger.info(
-      `\nUnmatched Slack user IDs (${warnings.length}): ${warnings.join(", ")}`
+      `\nUnmatched Slack user IDs (${warnings.length}): ${warnings.join(", ")}`,
     );
   }
   ctx.logger.info("=============================");
