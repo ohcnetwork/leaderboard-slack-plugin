@@ -17,6 +17,18 @@ interface ConversationHistoryResponse {
 }
 
 /**
+ * Collapses an error into a single short line for logs and error reports.
+ */
+function describeError(error: unknown, maxLength = 200): string {
+  const raw =
+    error instanceof Error ? error.message : String(error ?? "unknown error");
+  const collapsed = raw.replace(/\s+/g, " ").trim();
+  return collapsed.length > maxLength
+    ? `${collapsed.slice(0, maxLength)}…`
+    : collapsed;
+}
+
+/**
  * Generate Unix timestamp from a Date object
  */
 function generateTimestamp(date: Date): string {
@@ -49,37 +61,64 @@ export async function getSlackMessages(ctx: PluginContext, since?: Date) {
   const slack = getSlackWebClient(ctx.config);
 
   const slackChannel = ctx.config.slackChannel as string;
+  const logger = ctx.logger;
 
-  ctx.logger.info(
+  logger.info(
     `Fetching Slack messages from ${slackChannel} between ${oldest.toISOString()} and ${latest.toISOString()}...`,
   );
 
-  for await (const page of slack.paginate("conversations.history", {
-    channel: slackChannel,
-    oldest: generateTimestamp(oldest),
-    latest: generateTimestamp(latest),
-    limit: 100,
-  })) {
-    const messages = (page as unknown as ConversationHistoryResponse).messages
-      .filter(
-        (msg) =>
-          msg.type === "message" &&
-          msg.user &&
-          msg.text &&
-          msg.text.trim().length > 5, // ignore very short messages
-      )
-      .map((msg) => ({
-        id: parseInt((parseFloat(msg.ts) * 1000).toString()), // slack's ts is a float, so we multiply by 1000 to get the timestamp in milliseconds
-        user_id: msg.user!,
-        text: toHTML(msg.text ?? ""),
-        timestamp: new Date(Number(msg.ts) * 1000).toISOString(),
-      }));
+  let stored = 0;
+  let failed = 0;
 
-    ctx.logger.info(`Writing ${messages.length} messages to database`);
-    for (const message of messages) {
-      await anonymousEodUpdateQueries.upsert(ctx.db, message);
+  try {
+    for await (const page of slack.paginate("conversations.history", {
+      channel: slackChannel,
+      oldest: generateTimestamp(oldest),
+      latest: generateTimestamp(latest),
+      limit: 100,
+    })) {
+      const messages = (page as unknown as ConversationHistoryResponse).messages
+        .filter(
+          (msg) =>
+            msg.type === "message" &&
+            msg.user &&
+            msg.text &&
+            msg.text.trim().length > 5, // ignore very short messages
+        )
+        .map((msg) => ({
+          id: parseInt((parseFloat(msg.ts) * 1000).toString()), // slack's ts is a float, so we multiply by 1000 to get the timestamp in milliseconds
+          user_id: msg.user!,
+          text: toHTML(msg.text ?? ""),
+          timestamp: new Date(Number(msg.ts) * 1000).toISOString(),
+        }));
+
+      logger.info(`Writing ${messages.length} messages to database`);
+      for (const message of messages) {
+        try {
+          await anonymousEodUpdateQueries.upsert(ctx.db, message);
+          stored++;
+        } catch (error) {
+          // One malformed message must not discard the rest of the page.
+          failed++;
+          logger.debug(
+            `Failed to store Slack message ${message.id}: ${describeError(error)}`,
+          );
+        }
+      }
     }
+  } catch (error) {
+    logger.error(
+      `Stopped fetching Slack messages after storing ${stored}`,
+      error as Error,
+      { channel: slackChannel },
+    );
   }
+
+  if (failed > 0) {
+    logger.warn(`Failed to store ${failed} Slack messages`);
+  }
+
+  return { stored, failed };
 }
 
 /**
@@ -105,6 +144,7 @@ export async function ingestEodUpdates(ctx: PluginContext) {
   const warnings: string[] = [];
   const allActivities: Activity[] = [];
   const processedMessageIds: number[] = [];
+  const activityMessageIds = new Map<string, number[]>();
 
   updates.forEach((userUpdates, user_id) => {
     // Look up the contributor from our pre-fetched map
@@ -151,9 +191,10 @@ export async function ingestEodUpdates(ctx: PluginContext) {
       { texts: dayTexts, timestamp, ids },
     ] of messagesByDate.entries()) {
       const mergedText = dayTexts.join("\n\n");
+      const slug = `eod_update_${date}_${contributorUsername}`;
 
       allActivities.push({
-        slug: `eod_update_${date}_${contributorUsername}`,
+        slug,
         contributor: contributorUsername,
         activity_definition: "eod_update",
         title: "EOD Update",
@@ -165,6 +206,7 @@ export async function ingestEodUpdates(ctx: PluginContext) {
       });
 
       // Track processed message IDs for bulk deletion
+      activityMessageIds.set(slug, ids);
       processedMessageIds.push(...ids);
       processedCount += ids.length;
     }
@@ -175,15 +217,46 @@ export async function ingestEodUpdates(ctx: PluginContext) {
   });
 
   if (allActivities.length > 0) {
+    let inserted = 0;
+    const failedSlugs = new Set<string>();
+
     for (const activity of allActivities) {
-      await activityQueries.upsert(ctx.db, activity);
+      try {
+        await activityQueries.upsert(ctx.db, activity);
+        inserted++;
+      } catch (error) {
+        failedSlugs.add(activity.slug);
+        ctx.logger.debug(
+          `Failed to upsert EOD activity ${activity.slug}: ${describeError(error)}`,
+        );
+      }
     }
-    ctx.logger.info(`✓ Inserted ${allActivities.length} total EOD activities`);
+
+    ctx.logger.info(`✓ Inserted ${inserted} total EOD activities`);
+
+    if (failedSlugs.size > 0) {
+      ctx.logger.error(
+        `Failed to upsert ${failedSlugs.size} of ${allActivities.length} EOD activities`,
+      );
+      // Keep the source messages so the next run can retry the failed days.
+      for (const [slug, ids] of activityMessageIds) {
+        if (failedSlugs.has(slug)) {
+          for (const id of ids) {
+            const index = processedMessageIds.indexOf(id);
+            if (index !== -1) processedMessageIds.splice(index, 1);
+          }
+        }
+      }
+    }
   }
 
-  if (processedMessageIds.length > 0) {
-    for (const id of processedMessageIds) {
+  for (const id of processedMessageIds) {
+    try {
       await anonymousEodUpdateQueries.delete(ctx.db, id);
+    } catch (error) {
+      ctx.logger.debug(
+        `Failed to delete processed Slack message ${id}: ${describeError(error)}`,
+      );
     }
   }
 

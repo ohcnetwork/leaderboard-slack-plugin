@@ -41,6 +41,8 @@ const plugin: Plugin = {
     const days = 1;
     const since = days ? subDays(new Date(), days) : undefined;
 
+    // Ingestion still runs when fetching fails, so messages queued by an
+    // earlier run are not left stranded.
     await getSlackMessages(ctx, since);
     await ingestEodUpdates(ctx);
 
